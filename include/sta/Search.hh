@@ -364,6 +364,9 @@ public:
   void seedInputArrival(const Pin *pin,
  			Vertex *vertex,
  			TagGroupBldr *tag_bldr);
+  void seedCutoutIngressArrivals(const Pin *pin,
+                                 Vertex *vertex,
+                                 TagGroupBldr *tag_bldr);
   void ensureDownstreamClkPins();
   // Check paths from inputs from the default arrival clock
   // (missing set_input_delay).

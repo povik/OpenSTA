@@ -39,6 +39,7 @@ class StaState;
 class RiseFall;
 class MinMax;
 class ReportPath;
+struct CutoutEgressPath;
 
 // PathEnds represent search endpoints that are either unconstrained
 // or constrained by a timing check, output delay, data check,
@@ -65,7 +66,8 @@ public:
 	      latch_check,
 	      output_delay,
 	      gated_clk,
-	      path_delay
+	      path_delay,
+	      cutout_egress
   };
 
   virtual PathEnd *copy() = 0;
@@ -94,6 +96,7 @@ public:
   virtual bool isOutputDelay() const { return false; }
   virtual bool isGatedClock() const { return false; }
   virtual bool isPathDelay() const { return false; }
+  virtual bool isCutoutEgress() const { return false; }
   virtual Type type() const = 0;
   virtual const char *typeName() const = 0;
   virtual int exceptPathCmp(const PathEnd *path_end,
@@ -599,6 +602,27 @@ protected:
   OutputDelay *output_delay_;
   // Source clk arrival for set_min/max_delay -ignore_clk_latency.
   Arrival src_clk_arrival_;
+};
+
+class PathEndCutoutEgress : public PathEndClkConstrained
+{
+public:
+  explicit PathEndCutoutEgress(Path *path, Path *clk_path, CutoutEgressPath *egress_path);
+
+  virtual PathEnd *copy();
+  virtual Type type() const;
+  virtual const char *typeName() const;
+  virtual void reportShort(const ReportPath *report) const;
+  virtual void reportFull(const ReportPath *report) const;
+  virtual const TimingRole *checkRole(const StaState *sta) const;
+  virtual ArcDelay margin(const StaState *sta) const;
+  virtual Required requiredTime(const StaState *sta) const;
+  virtual Required requiredTimeNoCrpr(const StaState *sta) const;
+  virtual bool isCutoutEgress() const { return true; }
+  virtual float sourceClkOffset(const StaState *sta) const;
+
+protected:
+  CutoutEgressPath *egress_path_;
 };
 
 ////////////////////////////////////////////////////////////////

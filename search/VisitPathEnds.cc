@@ -40,6 +40,7 @@
 #include "Search.hh"
 #include "GatedClk.hh"
 #include "Variables.hh"
+#include "TagGroup.hh"
 
 namespace sta {
 
@@ -71,6 +72,12 @@ VisitPathEnds::visitPathEnds(Vertex *vertex,
     bool is_constrained = false;
     visitClkedPathEnds(pin, vertex, corner, min_max, filtered, visitor,
 		       is_constrained);
+
+    if (sdc_->hasCutoutEgressPath(pin)) {
+      visitCutoutEgress(pin, vertex, corner, min_max, visitor);
+      is_constrained = true;
+    }
+
     if (search_->unconstrainedPaths()
 	&& !is_constrained
 	&& !vertex->isDisabledConstraint())
@@ -127,6 +134,43 @@ VisitPathEnds::visitClkedPathEnds(const Pin *pin,
 			 is_constrained);
       visitDataCheckEnd(pin, path, end_rf, path_ap, filtered, visitor,
 			is_constrained);
+    }
+  }
+}
+
+void
+VisitPathEnds::visitCutoutEgress(const Pin *pin,
+                                 Vertex *vertex,
+                                 const Corner *corner,
+                                 const MinMaxAll *min_max,
+                                 PathEndVisitor *visitor)
+{
+  auto egress_paths = sdc_->cutoutEgressPaths(pin);
+  TagGroup *tag_group = search_->tagGroup(vertex);
+  if (tag_group) {
+    for (auto path : *egress_paths) {
+      const PathAnalysisPt *path_ap = path->path_ap;
+      if (min_max->matches(path_ap->pathMinMax())
+          && (corner == nullptr || path_ap->corner() == corner)) {
+        ClkInfo *clk_info = nullptr;
+        if (path->clk_edge) {
+          clk_info = search_->findClkInfo(path->clk_edge, path->clk_src, path->clk_is_propagated,
+                                          nullptr, false, nullptr, path->clk_insertion,
+                                          path->clk_latency, nullptr, path->path_ap, nullptr);
+        }
+        Tag *tag = search_->findTag(path->rf, path->path_ap, clk_info, path->is_clk,
+                                    nullptr, false, &path->states, false);
+        if (tag) {
+          size_t index;
+          bool exists;
+          tag_group->pathIndex(tag, index, exists);
+          if (exists) {
+            Path *sta_path = &vertex->paths()[index];
+            PathEndCutoutEgress path_end(sta_path, nullptr, path);
+            visitor->visit(&path_end);
+          }
+        }
+      }
     }
   }
 }

@@ -41,6 +41,7 @@
 #include "DataCheck.hh"
 #include "CycleAccting.hh"
 #include "ExceptionPath.hh"
+#include "PathAnalysisPt.hh"
 
 namespace sta {
 
@@ -130,6 +131,32 @@ private:
   bool subtract_pin_cap_[MinMax::index_count];
 };
 
+struct CutoutIngressPath {
+	const PathAnalysisPt *path_ap;
+	const ClockEdge *clk_edge;
+	const Pin *clk_src;
+	bool clk_is_propagated;
+	Arrival clk_insertion;
+	float clk_latency;
+	const RiseFall *rf;
+	bool is_clk;
+	Arrival arrival;
+	ExceptionStateSet states;
+};
+
+struct CutoutEgressPath {
+	const PathAnalysisPt *path_ap;
+	const ClockEdge *clk_edge;
+	const Pin *clk_src;
+	bool clk_is_propagated;
+	Arrival clk_insertion;
+	float clk_latency;
+	const RiseFall *rf;
+	bool is_clk;
+	Required required;
+	ExceptionStateSet states;
+};
+
 typedef Map<const char*,Clock*, CharPtrLess> ClockNameMap;
 typedef UnorderedMap<const Pin*, ClockSet*, PinIdHash> ClockPinMap;
 typedef Set<InputDelay*> InputDelaySet;
@@ -186,6 +213,11 @@ typedef Set<GroupPath*, ExceptionPathLess> GroupPathSet;
 typedef Map<const char*, GroupPathSet*, CharPtrLess> GroupPathMap;
 typedef Set<ClockPair, ClockPairLess> ClockPairSet;
 typedef Map<const Net*, MinMaxFloatValues> NetVoltageMap;
+
+typedef Vector<CutoutIngressPath*> CutoutIngressPathSeq;
+typedef Map<const Pin*, CutoutIngressPathSeq*, PinIdLess> CutoutIngressPathsPinMap;
+typedef Vector<CutoutEgressPath*> CutoutEgressPathSeq;
+typedef Map<const Pin*, CutoutEgressPathSeq*, PinIdLess> CutoutEgressPathsPinMap;
 
 void
 findLeafLoadPins(const Pin *pin,
@@ -899,6 +931,14 @@ public:
   OutputDelaySet *outputDelaysLeafPin(const Pin *leaf_pin);
   bool hasOutputDelay(const Pin *leaf_pin) const;
 
+  bool hasCutoutIngressPath(const Pin *pin) const;
+  CutoutIngressPathSeq *cutoutIngressPaths(const Pin *pin) const;
+  void addCutoutIngressPath(const Pin *pin, CutoutIngressPath *ingress_path);
+
+  bool hasCutoutEgressPath(const Pin *pin) const;
+  CutoutEgressPathSeq *cutoutEgressPaths(const Pin *pin) const;
+  void addCutoutEgressPath(const Pin *pin, CutoutEgressPath *ingress_path);
+
   PortExtCap *portExtCap(const Port *port,
                          const Corner *corner) const;
   bool hasPortExtCap(const Port *port) const;
@@ -1306,6 +1346,9 @@ protected:
   InputDelaysPinMap input_delay_leaf_pin_map_;
   InputDelaysPinMap input_delay_internal_pin_map_;
   int input_delay_index_;
+
+  CutoutIngressPathsPinMap ingress_paths_pin_map_;
+  CutoutEgressPathsPinMap egress_paths_pin_map_;
 
   OutputDelaySet output_delays_;
   OutputDelaysPinMap output_delay_pin_map_;

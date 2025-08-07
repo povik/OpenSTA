@@ -1178,6 +1178,8 @@ ArrivalVisitor::visit(Vertex *vertex)
   if (sdc_->isPathDelayInternalFrom(pin))
     // set_min/max_delay -from internal pin.
     search_->makeUnclkedPaths(vertex, false, true, tag_bldr_);
+  if (sdc_->hasCutoutIngressPath(pin))
+    search_->seedCutoutIngressArrivals(pin, vertex, tag_bldr_);
   if (sdc_->isLeafPinClock(pin))
     // set_min/max_delay -to internal pin also a clock src. Bizzaroland.
     // Re-seed the clock arrivals on top of the propagated paths.
@@ -1472,6 +1474,11 @@ Search::seedArrival(Vertex *vertex)
     // Clock pin may also have input arrivals from other clocks.
     seedInputArrival(pin, vertex, &tag_bldr);
     setVertexArrivals(vertex, &tag_bldr);
+  }
+  else if (sdc_->hasCutoutIngressPath(vertex->pin())) {
+    // FIXME: cutout ingress might be combined with other startpoints.
+    // This needs to be carefully thought through
+    arrival_iter_->enqueue(vertex);
   }
   else if (isInputArrivalSrchStart(vertex)) {
     TagGroupBldr tag_bldr(true, this);
@@ -2009,6 +2016,27 @@ Search::inputDelayTag(const Pin *pin,
   }
   return tag;
 }
+
+void
+Search::seedCutoutIngressArrivals(const Pin *pin,
+                                  Vertex *vertex,
+                                  TagGroupBldr *tag_bldr)
+{
+  CutoutIngressPathSeq *ingress_paths = sdc_->cutoutIngressPaths(pin);
+  for (auto path : *ingress_paths) {
+    ClkInfo *clk_info = nullptr;
+    if (path->clk_edge) {
+      clk_info = findClkInfo(path->clk_edge, path->clk_src, path->clk_is_propagated,
+                             nullptr, false, nullptr, path->clk_insertion, path->clk_latency,
+                             nullptr, path->path_ap, nullptr);
+    }
+    Tag *tag = findTag(path->rf, path->path_ap, clk_info, path->is_clk, nullptr, false, &path->states, false);
+    if (tag) {
+      tag_bldr->setArrival(tag, path->arrival);
+    }
+  }
+}
+
 
 ////////////////////////////////////////////////////////////////
 
@@ -3305,7 +3333,8 @@ Search::isEndpoint(Vertex *vertex,
 		   SearchPred *pred) const
 {
   Pin *pin = vertex->pin();
-  return hasFanin(vertex, pred, graph_)
+  return (hasFanin(vertex, pred, graph_)
+          || sdc_->hasCutoutIngressPath(vertex->pin()))
     && ((vertex->hasChecks()
 	 && hasEnabledChecks(vertex))
 	|| (variables_->gatedClkChecksEnabled()
@@ -3313,6 +3342,7 @@ Search::isEndpoint(Vertex *vertex,
 	|| vertex->isConstrained()
 	|| sdc_->isPathDelayInternalTo(pin)
 	|| !hasFanout(vertex, pred, graph_)
+        || sdc_->hasCutoutEgressPath(pin)
 	// Unconstrained paths at register clk pins.
 	|| (unconstrained_paths_
 	    && vertex->isRegClk()));

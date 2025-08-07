@@ -2017,6 +2017,76 @@ PathEndPathDelay::exceptPathCmp(const PathEnd *path_end,
 
 ////////////////////////////////////////////////////////////////
 
+PathEndCutoutEgress::PathEndCutoutEgress(Path *path, Path *clk_path, CutoutEgressPath *egress_path) :
+  PathEndClkConstrained(path, clk_path), egress_path_(egress_path)
+{
+}
+
+PathEnd *
+PathEndCutoutEgress::copy()
+{
+  return new PathEndCutoutEgress(path_, clk_path_, egress_path_);
+}
+
+PathEnd::Type
+PathEndCutoutEgress::type() const
+{
+  return Type::cutout_egress;
+}
+
+const char *
+PathEndCutoutEgress::typeName() const
+{
+  return "cutout egress";
+}
+
+void
+PathEndCutoutEgress::reportShort(const ReportPath *report) const
+{
+  report->reportShort(this);
+}
+
+void
+PathEndCutoutEgress::reportFull(const ReportPath *report) const
+{
+  report->reportFull(this);
+}
+
+const TimingRole *
+PathEndCutoutEgress::checkRole(const StaState *sta) const
+{
+  if (path_->minMax(sta) == MinMax::max())
+    return TimingRole::setup();
+  else
+    return TimingRole::hold();
+}
+
+ArcDelay
+PathEndCutoutEgress::margin(const StaState *sta) const
+{
+  return delay_zero;
+}
+
+Required
+PathEndCutoutEgress::requiredTime(const StaState *sta) const
+{
+  return egress_path_->required;
+}
+
+Required
+PathEndCutoutEgress::requiredTimeNoCrpr(const StaState *sta) const
+{
+  return egress_path_->required;
+}
+
+float
+PathEndCutoutEgress::sourceClkOffset(const StaState *sta) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////
+
 PathEndLess::PathEndLess(const StaState *sta) :
   sta_(sta)
 {

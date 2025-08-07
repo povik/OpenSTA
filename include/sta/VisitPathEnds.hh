@@ -141,6 +141,11 @@ protected:
 			     const RiseFall *rf,
 			     const ClockEdge *clk_edge,
 			     const MinMax *min_max) const;
+  void visitCutoutEgress(const Pin *pin,
+                         Vertex *vertex,
+                         const Corner *corner,
+                         const MinMaxAll *min_max,
+                         PathEndVisitor *visitor);
 };
 
 // Abstract base class used by visitPathEnds to visit vertex path ends.

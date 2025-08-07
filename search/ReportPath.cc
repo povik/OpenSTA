@@ -757,6 +757,36 @@ ReportPath::reportFull(const PathEndPathDelay *end) const
   reportSlack(end);
 }
 
+////////////////////////////////////////////////////////////////
+
+void
+ReportPath::reportShort(const PathEndCutoutEgress *end) const
+{
+  PathExpanded expanded(end->path(), this);
+  reportShort(end, expanded);
+}
+
+void
+ReportPath::reportShort(const PathEndCutoutEgress *end,
+      const PathExpanded &expanded) const
+{
+  reportStartpoint(end, expanded);
+  // TODO: generally not unclocked
+  reportUnclockedEndpoint(end, "cutout egress endpoint");
+  reportGroup(end);
+}
+
+void
+ReportPath::reportFull(const PathEndCutoutEgress *end) const
+{
+  PathExpanded expanded(end->path(), this);
+  reportShort(end, expanded);
+  reportSrcPathArrival(end, expanded);
+  reportRequired(end,
+    stdstrPrint("cutout boundary %s", end->checkRole(this)->to_string().c_str()));
+  reportSlack(end);
+}
+
 bool
 ReportPath::isPropagated(const Path *clk_path) const
 {

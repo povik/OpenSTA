@@ -125,7 +125,10 @@ Sdc::Sdc(StaState *sta) :
   path_delay_internal_from_(network_),
   path_delay_internal_from_break_(network_),
   path_delay_internal_to_(network_),
-  path_delay_internal_to_break_(network_)
+  path_delay_internal_to_break_(network_),
+
+  ingress_paths_pin_map_(network_),
+  egress_paths_pin_map_(network_)
 {
   sdc_ = this;
   initVariables();
@@ -2791,6 +2794,55 @@ Sdc::deleteInputDelay(InputDelay *input_delay)
 
   delete input_delay;
 }
+
+bool
+Sdc::hasCutoutIngressPath(const Pin *leaf_pin) const
+{
+  CutoutIngressPathSeq *ingress_paths = ingress_paths_pin_map_.findKey(leaf_pin);
+  return ingress_paths && !ingress_paths->empty();
+}
+
+CutoutIngressPathSeq*
+Sdc::cutoutIngressPaths(const Pin *leaf_pin) const
+{
+  return ingress_paths_pin_map_.findKey(leaf_pin);
+}
+
+void
+Sdc::addCutoutIngressPath(const Pin *pin, CutoutIngressPath *path)
+{
+  CutoutIngressPathSeq *paths = ingress_paths_pin_map_.findKey(pin);
+  if (paths == nullptr) {
+    paths = new CutoutIngressPathSeq;
+    ingress_paths_pin_map_[pin] = paths;
+  }
+  paths->push_back(path);
+}
+
+bool
+Sdc::hasCutoutEgressPath(const Pin *leaf_pin) const
+{
+  CutoutEgressPathSeq *egress_paths = egress_paths_pin_map_.findKey(leaf_pin);
+  return egress_paths && !egress_paths->empty();
+}
+
+CutoutEgressPathSeq*
+Sdc::cutoutEgressPaths(const Pin *leaf_pin) const
+{
+  return egress_paths_pin_map_.findKey(leaf_pin);
+}
+
+void
+Sdc::addCutoutEgressPath(const Pin *pin, CutoutEgressPath *path)
+{
+  CutoutEgressPathSeq *paths = egress_paths_pin_map_.findKey(pin);
+  if (paths == nullptr) {
+    paths = new CutoutEgressPathSeq;
+    egress_paths_pin_map_[pin] = paths;
+  }
+  paths->push_back(path);
+}
+
 
 void
 Sdc::swapPortDelays(Sdc *sdc1,

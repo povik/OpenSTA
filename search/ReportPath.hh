@@ -82,6 +82,7 @@ public:
   void reportShort(const PathEndOutputDelay *end) const;
   void reportShort(const PathEndGatedClock *end) const;
   void reportShort(const PathEndDataCheck *end) const;
+  void reportShort(const PathEndCutoutEgress *end) const;
 
   void reportFull(const PathEndUnconstrained *end) const;
   void reportFull(const PathEndCheck *end) const;
@@ -90,6 +91,7 @@ public:
   void reportFull(const PathEndOutputDelay *end) const;
   void reportFull(const PathEndGatedClock *end) const;
   void reportFull(const PathEndDataCheck *end) const;
+  void reportFull(const PathEndCutoutEgress *end) const;
 
   void reportJsonHeader() const;
   void reportJsonFooter() const;
@@ -182,6 +184,8 @@ protected:
   void reportShort(const PathEndGatedClock *end,
 		   const PathExpanded &expanded) const;
   void reportShort(const PathEndDataCheck *end,
+		   const PathExpanded &expanded) const;
+  void reportShort(const PathEndCutoutEgress *end,
 		   const PathExpanded &expanded) const;
   void reportEndpoint(const PathEndOutputDelay *end) const;
   void reportEndpointOutputDelay(const PathEndClkConstrained *end) const;

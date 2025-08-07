@@ -262,8 +262,13 @@ public:
   using Network::libertyPort;
   using Network::isLeaf;
 
-protected:
+  // FIXME: should not be exposed
+  // Cell lookup search order sequence.
+  ConcreteLibrarySeq library_seq_;
+  ConcreteLibraryMap library_map_;
   void addLibrary(ConcreteLibrary *library);
+
+protected:
   void setName(const char *name);
   void clearConstantNets();
   void visitConnectedPins(const Net *net,
@@ -277,9 +282,6 @@ protected:
   void connectNetPin(ConcreteNet *cnet,
 		     ConcretePin *cpin);
 
-  // Cell lookup search order sequence.
-  ConcreteLibrarySeq library_seq_;
-  ConcreteLibraryMap library_map_;
   Instance *top_instance_;
   NetSet constant_nets_[2];  // LogicValue::zero/one
   LinkNetworkFunc link_func_;
