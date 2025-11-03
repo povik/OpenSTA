@@ -1781,7 +1781,7 @@ void
 ExceptionThru::deletePin(const Pin *pin,
                          const Network *network)
 {
-  if (pins_) {
+  if (pins_ && pins_->hasKey(pin)) {
     pins_->erase(pin);
     // Incrementally update hash.
     hash_ -= network->id(pin) * hash_pin;
@@ -1792,7 +1792,7 @@ void
 ExceptionThru::deleteNet(const Net *net,
                          const Network *network)
 {
-  if (nets_) {
+  if (nets_ && nets_->hasKey(net)) {
     nets_->erase(net);
     // Incrementally update hash.
     hash_ -= network->id(net) * hash_net;
@@ -1803,7 +1803,7 @@ void
 ExceptionThru::deleteInstance(const Instance *inst,
                               const Network *network)
 {
-  if (insts_) {
+  if (insts_ && insts_->hasKey(inst)) {
     insts_->erase(inst);
     // Incrementally update hash.
     hash_ -= network->id(inst) * hash_inst;
