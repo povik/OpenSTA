@@ -32,8 +32,6 @@
 namespace sta {
 
 class TimingArcAttrs;
-class InternalPowerAttrs;
-class LeakagePowerAttrs;
 class Debug;
 class Report;
 
@@ -66,13 +64,6 @@ public:
                                LibertyPort *related_out,
                                TimingArcAttrsPtr attrs,
                                int line);
-  InternalPower *makeInternalPower(LibertyCell *cell,
-                                   LibertyPort *port,
-                                   LibertyPort *related_port,
-                                   InternalPowerAttrs *attrs);
-  LeakagePower *makeLeakagePower(LibertyCell *cell,
-                                 LeakagePowerAttrs *attrs);
-
   TimingArcSet *makeFromTransitionArcs(LibertyCell *cell,
                                        LibertyPort *from_port,
                                        LibertyPort *to_port,
@@ -89,7 +80,6 @@ public:
   TimingArcSet *makeClockTreePathArcs(LibertyCell *cell,
                                       LibertyPort *to_port,
                                       const TimingRole *role,
-                                      const MinMax *min_max,
                                       TimingArcAttrsPtr attrs);
   TimingArcSet *makeMinPulseWidthArcs(LibertyCell *cell,
                                       LibertyPort *from_port,

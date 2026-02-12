@@ -254,6 +254,7 @@ deleteAllMemory()
   deleteDelayCalcs();
   PortDirection::destroy();
   deleteLiberty();
+  deleteTmpStrings();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -535,6 +536,14 @@ Sta::~Sta()
 void
 Sta::clear()
 {
+  clearNonSdc();
+  for (Mode *mode : modes_)
+    mode->sdc()->clear();
+}
+
+void
+Sta::clearNonSdc()
+{
   // Sdc holds search filter, so clear search first.
   search_->clear();
   levelize_->clear();
@@ -548,10 +557,8 @@ Sta::clear()
   clk_skews_->clear();
 
   // scenes are NOT cleared because they are used to index liberty files.
-  for (Mode *mode : modes_) {
-    mode->sdc()->clear();
+  for (Mode *mode : modes_)
     mode->clkNetwork()->clkPinsInvalid();
-  }
 
   delete graph_;
   graph_ = nullptr;
@@ -614,6 +621,12 @@ void
 Sta::networkChanged()
 {
   clear();
+}
+
+void
+Sta::networkChangedNonSdc()
+{
+  clearNonSdc();
 }
 
 void
@@ -4453,6 +4466,7 @@ Sta::makeInstanceAfter(const Instance *inst)
         }
       }
       graph_->makeInstanceEdges(inst);
+      power_->powerInvalid();
     }
   }
 }
@@ -4521,6 +4535,8 @@ Sta::replaceEquivCellAfter(const Instance *inst)
       }
     }
     delete pin_iter;
+    clk_skews_->clear();
+    power_->powerInvalid();
   }
 }
 
@@ -4594,7 +4610,6 @@ Sta::replaceCellBefore(const Instance *inst,
       }
     }
     delete pin_iter;
-    clk_skews_->clear();
   }
 }
 
@@ -4665,6 +4680,7 @@ Sta::connectPinAfter(const Pin *pin)
     mode->sim()->connectPinAfter(pin);
   }
   clk_skews_->clear();
+  power_->powerInvalid();
 }
 
 void
@@ -4770,6 +4786,7 @@ Sta::disconnectPinBefore(const Pin *pin)
       }
     }
     clk_skews_->clear();
+    power_->powerInvalid();
   }
 }
 
@@ -4816,6 +4833,8 @@ Sta::deleteNetBefore(const Net *net)
   }
   for (Mode *mode : modes_)
     mode->sdc()->deleteNetBefore(net);
+  clk_skews_->clear();
+  power_->powerInvalid();
 }
 
 void
@@ -4845,7 +4864,8 @@ Sta::deleteLeafInstanceBefore(const Instance *inst)
     mode->sim()->deleteInstanceBefore(inst);
     mode->sdc()->deleteInstanceBefore(inst);
   }
-  power_->deleteInstanceBefore(inst);
+  clk_skews_->clear();
+  power_->powerInvalid();
 }
 
 void
@@ -4926,8 +4946,6 @@ Sta::deletePinBefore(const Pin *pin)
     mode->sim()->deletePinBefore(pin);
     mode->clkNetwork()->deletePinBefore(pin);
   }
-  power_->deletePinBefore(pin);
-  clk_skews_->clear();
 }
 
 void

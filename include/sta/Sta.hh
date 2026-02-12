@@ -153,6 +153,10 @@ public:
                                       Scene *scene,
                                       const MinMaxAll *min_max,
                                       bool infer_latches);
+  // tmp public
+  void readLibertyAfter(LibertyLibrary *liberty,
+                        Scene *scene,
+                        const MinMax *min_max);
   bool readVerilog(const char *filename);
   // Network readers call this to notify the Sta to delete any previously
   // linked network.
@@ -866,7 +870,9 @@ public:
   // User visible but non SDC commands.
 
   // Clear all state except network, scenes and liberty libraries.
-  virtual void clear();
+  void clear();
+  // Clear all state except network, scenes liberty libraries, and sdc.
+  void clearNonSdc();
   // Namespace used by command interpreter.
   CmdNamespace cmdNamespace();
   void setCmdNamespace(CmdNamespace namespc);
@@ -1262,8 +1268,12 @@ public:
   virtual void disconnectPin(Pin *pin);
   virtual void makePortPin(const char *port_name,
                            PortDirection *dir);
-  // Notify STA of network change.
+  // Notify STA that the network has changed without using the network
+  // editing API. For example, reading a netlist without using the
+  // builtin network readers.
   void networkChanged();
+  // Network changed but all SDC references to instance/net/pin/port are preserved.
+  void networkChangedNonSdc();
   void deleteLeafInstanceBefore(const Instance *inst);
   void deleteInstancePinsBefore(const Instance *inst);
 
@@ -1576,9 +1586,6 @@ protected:
                      const Mode *mode);
   void findRegisterPreamble(const Mode *mode);
   bool crossesHierarchy(Edge *edge) const;
-  void readLibertyAfter(LibertyLibrary *liberty,
-                        Scene *scene,
-                        const MinMax *min_max);
   void powerPreamble();
   void powerPreamble(const Scene *scene);
   virtual void replaceCell(Instance *inst,

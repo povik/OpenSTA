@@ -63,6 +63,16 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Build CXX_FLAGS: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
+# Enable Link-Time Optimization (LTO) for Release builds.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+if(ipo_supported)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+  message(STATUS "IPO/LTO: enabled for Release builds")
+else()
+  message(STATUS "IPO/LTO: not supported - ${ipo_error}")
+endif()
+
 ################################################################
 #
 # Source files.
@@ -311,6 +321,20 @@ flex_target(SaifLex ${STA_HOME}/power/SaifLex.ll
 bison_target(SaifParse ${STA_HOME}/power/SaifParse.yy
   ${CMAKE_CURRENT_BINARY_DIR}/SaifParse.cc)
 add_flex_bison_dependency(SaifLex SaifParse)
+
+# Suppress -Wsign-compare in flex-generated code (yyleng vs int loop counter).
+# Only needed with older GCC (e.g. CentOS 7 stock 4.8.5); newer GCC/flex handle it.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set_source_files_properties(
+    ${FLEX_VerilogLex_OUTPUTS}
+    ${FLEX_LibertyLex_OUTPUTS}
+    ${FLEX_LibExprLex_OUTPUTS}
+    ${FLEX_SdfLex_OUTPUTS}
+    ${FLEX_SpefLex_OUTPUTS}
+    ${FLEX_SaifLex_OUTPUTS}
+    PROPERTIES COMPILE_FLAGS "-Wno-sign-compare"
+  )
+endif()
 
 ################################################################
 
