@@ -550,6 +550,8 @@ Sta::clearNonSdc()
   deleteParasitics();
   graph_delay_calc_->clear();
   power_->clear();
+  for (Mode *mode : modes_)
+    mode->sim()->clear();
   if (check_min_pulse_widths_)
     check_min_pulse_widths_->clear();
   if (check_min_periods_)
