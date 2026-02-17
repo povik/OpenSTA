@@ -288,7 +288,7 @@ protected:
 
   const Net *findParasiticNet(const Pin *pin) const;
 
-  float coupling_cap_factor_;
+  float coupling_cap_factor_ = 1.0;
 };
 
 class ParasiticNodeLess
