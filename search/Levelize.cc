@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <limits>
 
 #include "ContainerHelpers.hh"
 #include "Report.hh"
